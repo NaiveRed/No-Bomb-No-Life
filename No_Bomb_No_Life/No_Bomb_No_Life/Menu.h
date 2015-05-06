@@ -11,4 +11,4 @@ Email: jason841201@gmail.com
 void strDraw(std::string str, int colorIndex, HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE));
 
 void DisplayList();
-void MakeTitleGraph(bool TimeSwitch);
+void MakeTitleGraph(bool& TimeSwitch);
