@@ -107,7 +107,7 @@ loop:
 
 	}
 }
-void MakeTitleGraph(bool TimeSwitch)
+void MakeTitleGraph(bool &TimeSwitch)
 {
 	HANDLE hConsole(GetStdHandle(STD_OUTPUT_HANDLE));
 	int ColorIndex, pos_x, pos_y;
