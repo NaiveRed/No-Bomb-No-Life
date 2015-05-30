@@ -10,12 +10,40 @@
 
 bool Menu::TimeSwitch(true);
 
+Menu::Menu()
+{
+	//角色資訊設定
+	const std::vector<std::string> name{ "咩咩", "小撫子", "刀下心", "村長", "已知圖騰" };
+	const std::vector<std::string>  appearance{ "◎", "㊣", "忍", "⊕", "∴" };
+	size_t NumOfCharacter(name.size());
+
+	unsigned int power[]{1, 2, 3, 4, 5};
+	unsigned int powerLim[]{2, 2, 3, 4, 5};
+	unsigned int amount[]{1, 2, 3, 4, 5};
+	unsigned int amountLim[]{3, 2, 3, 4, 5};
+	unsigned int speed[]{2, 2, 3, 4, 5};
+	unsigned int speedLim[]{5, 2, 3, 4, 5};
+	std::vector<Ability> ability;
+
+	//Character List
+	for (size_t i = 0; i < NumOfCharacter; i++)
+		ability.push_back(Ability{ power[i], powerLim[i], amount[i], amountLim[i], speed[i], speedLim[i] });
+
+
+	for (size_t i = 0; i < NumOfCharacter; i++)
+		CharacterList.push_back(std::make_shared<Character>(appearance[i], name[i], ability[i]));
+
+	//Map list
+	for (int i = 1; i <= NUM_OF_MAP; i++)
+		mapList.push_back(std::make_shared<Map>("map" + std::to_string(i)));
+}
 int Menu::DisplayList()
 {
+	SetConsoleSize(100, 30);
 	using std::cout;
 	using std::endl;
 
-	const std::vector<std::string> menuList{ ("Player Vs Player"), ("Player Vs Computer"), ("Config"), ("Staff"), ("Exit") };
+	const std::vector<std::string> menuList{ ("Player Vs Player"), ("Player Vs Computer"), ("Help"), ("Staff"), ("Exit") };
 	const char *point("⊙");
 
 
@@ -26,9 +54,10 @@ int Menu::DisplayList()
 	HANDLE hConsole(GetStdHandle(STD_OUTPUT_HANDLE));
 
 
+
 loop:
 	FillConsole();
-
+	TimeSwitch = false;
 	MakeTitleGraph(TimeSwitch);
 	if (TimeSwitch)TimeSwitch = false;
 
@@ -52,13 +81,13 @@ loop:
 				if (fc == 1)//每一個項目裡的內容
 				{
 					if (fr == 0)
-						return 1;
+						return PVP_OPTION;
 					else if (fr == 1)
-						return 2;
+						return PVC_OPTION;
 					else if (fr == 2)
-						return 3;
+						return HELP_OPTION;
 					else if (fr == 3)
-						return 4;
+						return STAFF_OPTION;
 					else if (fr == 4)
 						exit(EXIT_SUCCESS);
 				}
@@ -83,20 +112,20 @@ loop:
 
 		switch (chk = _getch())
 		{
-		case 0x48:  //up
+		case UP:  //up
 			fr--;
 			if (fr < 0)
 				fr = numOfList - 1;
 			break;
-		case 0x50:  //down
+		case DOWN:  //down
 			fr++;
 			if (fr > static_cast<int>(numOfList)-1)
 				fr = 0;
 			break;
-		case 0x1b:  //Esc
+		case ESC:  //Esc
 			fc--;
 			break;
-		case 0xD:  //enter
+		case ENTER:  //enter
 			fc++;
 			break;
 		}
@@ -104,44 +133,518 @@ loop:
 	}
 }
 
-int Menu::DisplayPvPMenu()
+int Menu::DisplayPvPMenu(std::shared_ptr<Character>& player1, std::shared_ptr<Character>& player2)
 {
-	char chk;
-	std::cout << "PVP" << std::endl;
-	if (chk = _getch() == 0x1b)
-		return 0;
-	else std::cout << "go" << std::endl;
-	return 1;
+	SetConsoleSize(100, 30);
+	FillConsole();
+	using std::cout;
+	using std::endl;
+	HANDLE hConsole(GetStdHandle(STD_OUTPUT_HANDLE));
+	size_t NumOfCharacter(CharacterList.size());
+	short pos_x(50 - NumOfCharacter * 3);//x軸偏中
+	short pos_y(13);//y軸偏中
+	char *point1("↓");
+	char *point2("↑");
+	int fc1(0);//player1
+	int fc2(0);//player2
+	const std::string P1_BAR[]
+	{
+		" .----------------. .----------------. ",
+			"| .--------------. | .--------------. |",
+			"| |   ______     | | |     __       | |",
+			"| |  |_   __ \\   | | |    /  |      | |",
+			"| |    | |__) |  | | |    `| |      | |",
+			"| |    |  ___/   | | |     | |      | |",
+			"| |   _| |_      | | |    _| |_     | |",
+			"| |  |_____|     | | |   |_____|    | |",
+			"| |              | | |              | |",
+			"| '--------------' | '--------------' |",
+			" '----------------' '----------------' "
+	};
+	const std::string P2_BAR[]
+	{
+		" .----------------.  .----------------. ",
+			"| .--------------. || .--------------. |",
+			"| |   ______     | || |    _____     | |",
+			"| |  |_   __ \\   | || |   / ___ `.   | |",
+			"| |    | |__) |  | || |  |_/___) |   | |",
+			"| |    |  ___/   | || |   .'____.'   | |",
+			"| |   _| |_      | || |  / /____     | |",
+			"| |  |_____|     | || |  |_______|   | |",
+			"| |              | || |              | |",
+			"| '--------------' || '--------------' |",
+			" '----------------'  '----------------' "
+	};
+
+	COORD chDisplay1{ 41, 2 }, chDisplay2{ 2, 18 };
+	bool flag1(true), flag2(true), flag3(false), flag4(false);
+
+	//display P1 BAR
+	gotoXY(0, 0);
+	for (int i = 0; i < 11; i++)
+	{
+		strDraw(P1_BAR[i], 12, hConsole);//紅色
+		cout << '\n';
+	}
+	//display P2 BAR
+	for (int i = 0, y = 16; i < 11; i++, y++)
+	{
+		gotoXY(60, y);
+		strDraw(P2_BAR[i], 11, hConsole);//青色
+		cout << '\n';
+	}
+
+	//display character appearance
+	gotoXY(pos_x, pos_y);
+	for (size_t index = 0; index < NumOfCharacter; index++)
+		cout << CharacterList[index]->getAppearance() << "      ";
+
+	while (true)
+	{
+
+
+		//player1
+		gotoXY(pos_x, pos_y - 2);
+		for (size_t index = 0; index < NumOfCharacter; index++)
+		{
+			if (fc1 == index)
+			{
+				strDraw(point1, 12, hConsole);
+				cout << "        ";
+			}
+			else
+				cout << "        ";
+		}
+
+		//player2
+		gotoXY(pos_x, pos_y + 2);
+		for (size_t index = 0; index < NumOfCharacter; index++)
+		{
+			if (fc2 == index)
+			{
+				strDraw(point2, 11, hConsole);
+				cout << "        ";
+			}
+			else
+				cout << "        ";
+		}
+
+		//15 :亮白色 9:藍色 8:灰色
+		//display character detail1
+		std::string space{ "             " };
+		gotoXY(chDisplay1.X, chDisplay1.Y);
+		strDraw("角色名稱: " + CharacterList[fc1]->getName() + space, 15, hConsole);
+
+		gotoXY(chDisplay1.X, chDisplay1.Y + 2);
+		strDraw("速度: ", 15, hConsole);
+		for (int i = CharacterList[fc1]->getSpeed(); i; i--)
+			strDraw("▅ ", 9, hConsole);
+		for (int i = CharacterList[fc1]->getSpeedLim() - CharacterList[fc1]->getSpeed(); i; i--)
+			strDraw("▅ ", 8, hConsole);
+		cout << space;
+
+		gotoXY(chDisplay1.X, chDisplay1.Y + 4);
+		strDraw("水球: ", 15, hConsole);
+		for (int i = CharacterList[fc1]->getAmount(); i; i--)
+			strDraw("▅ ", 9, hConsole);
+		for (int i = CharacterList[fc1]->getAmountLim() - CharacterList[fc1]->getAmount(); i; i--)
+			strDraw("▅ ", 8, hConsole);
+		cout << space;
+
+		gotoXY(chDisplay1.X, chDisplay1.Y + 6);
+		strDraw("水柱: ", 15, hConsole);
+		for (int i = CharacterList[fc1]->getPower(); i; i--)
+			strDraw("▅ ", 9, hConsole);
+		for (int i = CharacterList[fc1]->getPowerLim() - CharacterList[fc1]->getPower(); i; i--)
+			strDraw("▅ ", 8, hConsole);
+		cout << space;
+
+		//display character detail2
+		gotoXY(chDisplay2.X, chDisplay2.Y);
+		strDraw("角色名稱: " + CharacterList[fc2]->getName() + space, 15, hConsole);
+
+
+		gotoXY(chDisplay2.X, chDisplay2.Y + 2);
+		cout << "速度: ";
+		for (int i = CharacterList[fc2]->getSpeed(); i; i--)
+			strDraw("▅ ", 9, hConsole);
+		for (int i = CharacterList[fc2]->getSpeedLim() - CharacterList[fc2]->getSpeed(); i; i--)
+			strDraw("▅ ", 8, hConsole);
+		cout << space;
+
+		gotoXY(chDisplay2.X, chDisplay2.Y + 4);
+		strDraw("水球: ", 15, hConsole);
+		for (int i = CharacterList[fc2]->getAmount(); i; i--)
+			strDraw("▅ ", 9, hConsole);
+		for (int i = CharacterList[fc2]->getAmountLim() - CharacterList[fc2]->getAmount(); i; i--)
+			strDraw("▅ ", 8, hConsole);
+		cout << space;
+
+		gotoXY(chDisplay2.X, chDisplay2.Y + 6);
+		strDraw("水柱: ", 15, hConsole);
+		for (int i = CharacterList[fc2]->getPower(); i; i--)
+			strDraw("▅ ", 9, hConsole);
+		for (int i = CharacterList[fc2]->getPowerLim() - CharacterList[fc2]->getPower(); i; i--)
+			strDraw("▅ ", 8, hConsole);
+		cout << space;
+
+		gotoXY(0, 0);
+
+		//接收指令
+		Sleep(50);
+
+	wait:
+		bool flag(false);
+		//player1
+		if (flag1)
+		{
+			if (GetAsyncKeyState(P1_LEFT))
+			{
+				flag = true;
+				fc1--;
+				if (fc1 < 0)
+					fc1 = NumOfCharacter - 1;
+
+			}
+			else if (GetAsyncKeyState(P1_RIGHT))
+			{
+				flag = true;
+				fc1++;
+				if (fc1 == NumOfCharacter)
+					fc1 = 0;
+			}
+			else if (GetAsyncKeyState(P1_ENTER))//'>'
+			{
+				player1 = CharacterList[fc1];
+				flag = true;
+				flag1 = false;
+				flag3 = true;
+			}
+		}
+		else if (GetAsyncKeyState(P1_CANCEL))//'?'
+		{
+			flag = true;
+			flag1 = true;
+			flag3 = true;
+		}
+		//player2
+		if (flag2)
+		{
+			if (GetAsyncKeyState(P2_LEFT))
+			{
+				flag = true;
+				fc2--;
+				if (fc2 < 0)
+					fc2 = NumOfCharacter - 1;
+			}
+			else if (GetAsyncKeyState(P2_RIGHT))
+			{
+				flag = true;
+				fc2++;
+				if (fc2 == NumOfCharacter)
+					fc2 = 0;
+			}
+			else if (GetAsyncKeyState(P2_ENTER))//'Z'
+			{
+				player2 = CharacterList[fc2];
+				flag = true;
+				flag2 = false;
+				flag4 = true;
+			}
+		}
+		else if (GetAsyncKeyState(P2_CANCEL))//'X'
+		{
+			flag = true;
+			flag2 = true;
+			flag4 = true;
+		}
+
+		//display "已鎖定"
+		if (flag4)
+		{
+			if (!flag2)
+			{
+				gotoXY(chDisplay2.X + 40, chDisplay2.Y);
+				strDraw("已鎖定!", 11, hConsole);
+			}
+			else
+			{
+				gotoXY(chDisplay2.X + 40, chDisplay2.Y);
+				cout << space;
+			}
+			flag4 = false;
+		}
+		if (flag3)
+		{
+			if (!flag1)
+			{
+				gotoXY(chDisplay1.X + 40, chDisplay1.Y);
+				strDraw("已鎖定!", 12, hConsole);
+			}
+			else
+			{
+				gotoXY(chDisplay1.X + 40, chDisplay1.Y);
+				cout << space;
+			}
+			flag3 = false;
+		}
+
+		if (!flag)
+		{
+			char temp;
+			if (temp = _getch() == ESC)
+				return 0;
+			goto wait;
+		}
+		else if (!flag1&&!flag2)
+		{
+			gotoXY(2, pos_y);
+			strDraw("Press Enter", 14, hConsole);
+			gotoXY(88, pos_y);
+			strDraw("Press Enter", 14, hConsole);
+			char temp;
+			while (true)
+			{
+				temp = _getch();
+				if (temp == ENTER)
+					return PVP_OPTION;
+				else if (temp == '/' || temp == '?')
+				{
+					flag1 = true;
+					flag3 = true;
+
+					gotoXY(2, pos_y);
+					cout << "           ";
+					gotoXY(88, pos_y);
+					cout << "           ";
+					goto wait;
+				}
+				else if (temp == 'X' || temp == 'x')
+				{
+					flag2 = true;
+					flag4 = true;
+
+					gotoXY(2, pos_y);
+					cout << "           ";
+					gotoXY(88, pos_y);
+					cout << "           ";
+					goto wait;
+				}
+			}
+		}
+		else {
+
+			gotoXY(2, pos_y);
+			cout << "           ";
+			gotoXY(88, pos_y);
+			cout << "           ";
+			Sleep(150);
+		}
+	}
+
+
 }
+
 
 int  Menu::DisplayPvCMenu()
 {
+	SetConsoleSize(100, 30);
 	char chk;
 	std::cout << "PVC" << std::endl;
 	if (chk = _getch() == 0x1b)
 		return 0;
 	else std::cout << "go" << std::endl;
-	return 1;
+	return PVC_OPTION;
 }
-int  Menu::DisplayConfig()
+int  Menu::DisplayHelp()//by Jheng, Bo An
 {
-	char chk;
-	std::cout << "Config" << std::endl;
-	if (chk = _getch() == 0x1b)
-		return 0;
-	else std::cout << "go" << std::endl;
-	return 1;
-}
-int  Menu::DisplayStaff()
-{
-	char chk;
-	std::cout << "Staff" << std::endl;
-	if (chk = _getch() == 0x1b)
-		return 0;
-	else std::cout << "go" << std::endl;
-	return 1;
-}
+	HANDLE hConsole(GetStdHandle(STD_OUTPUT_HANDLE));
 
+	const std::string Help_BAR[]
+	{
+		" _    _      _",
+			"| |  | |    | |",
+			"| |__| | ___| |_ __",
+			"|  __  |/ _ \\ | '_ \\",
+			"| |  | |  __/ | |_) |",
+			"|_|  |_|\\___|_| .__/ ",
+			"              | |    ",
+			"              |_|   ",
+	};
+
+	for (int i = 0; i <= 7; i++)
+	{
+		strDraw(Help_BAR[i], 14, hConsole);//黃色
+		std::cout << '\n';
+	}
+	std::cout << "\n";
+	std::cout << "player one: Using key \"up\",\"down\",\"left\",\"right\" to control character." << std::endl;
+	std::cout << "player two : Using key \"Y\", \"H\", \"G\", \"J\" to control character." << std::endl;
+
+	char chk;
+	while (true)
+		if (chk = _getch() == 0x1b)
+			return 0;
+}
+int  Menu::DisplayStaff()//by Jheng, Bo An
+{
+	HANDLE hConsole(GetStdHandle(STD_OUTPUT_HANDLE));
+
+	const std::string Staff_BAR[]
+	{
+		"   _____ _         __  __ ",
+			"  / ____| |       / _|/ _|",
+			" | (___ | |_ __ _| |_| |_ ",
+			"  \\___ \\| __/ _` |  _|  _|",
+			"  ____) | || (_| | | | |  ",
+			" |_____/ \\__\\__,_|_| |_|  ",
+	};
+	gotoXY(0, 0);
+	for (int i = 0; i <= 5; i++)
+	{
+		strDraw(Staff_BAR[i], 13, hConsole);//紫色
+		std::cout << '\n';
+	}
+	std::cout << "\n";
+
+	const std::string Producer_BAR[]
+	{
+		"                      _                     ",
+			"                     | |                    ",
+			"  _ __  _ __ ___   __| |_   _  ___ ___ _ __ ",
+			" | '_ \\| '__/ _ \\ / _` | | | |/ __/ _ \\ '__|   .",
+			" | |_) | | | (_) | (_| | |_| | (_|  __/ |   ",
+			" | .__/|_|  \\___/ \\__,_|\\__,_|\\___\\___|_|      .",
+			" | |",
+			" |_|",
+
+	};
+
+	for (int i = 0; i <= 7; i++)
+	{
+		strDraw(Producer_BAR[i], 12, hConsole);//紅色
+		std::cout << '\n';
+	}
+
+	std::cout << "\n";
+
+
+	const std::string Assistant_BAR[]
+	{
+		"	           _     _              _",
+			"     /\\           (_)   | |            | |",
+			"    /  \\   ___ ___ _ ___| |_ __ _ _ __ | |_  ",
+			"   / /\\ \\ / __/ __| / __| __/ _` | '_ \\| __|  .",
+			"  / ____ \\\\__ \\__ \\ \\__ \\ || (_| | | | | |_   ",
+			" /_/    \\_\\___/___/_|___/\\__\\__,_|_| |_|\\__|  .",
+	};
+
+	for (int i = 0; i <= 5; i++)
+	{
+		strDraw(Assistant_BAR[i], 11, hConsole);//青色
+		std::cout << '\n';
+	}
+
+	std::cout << "\n";
+
+	//const std::string Member_BAR[]
+	//{
+	//	"  __  __                _",
+	//		" |  \\/  | ___ _ __ ___ | |__   ___ _ __",
+	//		" | |\\/| |/ _ \\ '_ ` _ \\| '_ \\ / _ \\ '__| .",
+	//		" | |  | |  __/ | | | | | |_) |  __/ |",
+	//		" |_|  |_|\\___|_| |_| |_|_.__/ \\___|_|    .",
+	//};
+
+	//for (int i = 0; i <= 4; i++)
+	//{
+	//	strDraw(Member_BAR[i], 10, hConsole);//綠色
+	//	std::cout << '\n';
+	//}
+
+	gotoXY(50, 11);
+	std::cout << "Hung, Chun Chung.(NaiveRed)";
+	gotoXY(50, 20);
+	std::cout << "Jheng, Bo An.";
+	/*gotoXY(45, 24);
+	std::cout << "Chang, Ting Wei.簡佑如.";*/
+	char chk;
+
+	while (true)
+		if (chk = _getch() == 0x1b)
+			return 0;
+}
+bool Menu::selectMap(std::shared_ptr<Map>& map)
+{
+	SetConsoleSize(90, 30);
+	FillConsole();
+
+	size_t NumOfMap(mapList.size());
+	int fc(0);
+	char chk;
+
+	const std::string MAP_BAR[] = {
+		" ____    ____            _            _______  ",
+		"|_   \\  /   _|          / \\          |_   __ \\  ",
+		"  |   \\/   |           / _ \\           | |__) | ",
+		"  | |\\  /| |          / ___ \\          |  ___/  ",
+		" _| |_\\/_| |_       _/ /   \\ \\_       _| |_     ",
+		"|_____||_____|     |____| |____|     |_____|    ",
+	};
+
+
+	short mapBar_x(20), mapBar_y(19);
+	for (int i = 0; i <= 5; i++)
+	{
+		gotoXY(mapBar_x, mapBar_y++);
+		strDraw(MAP_BAR[i], 15);
+		std::cout << '\n';
+	}
+
+	while (true)
+	{
+
+		mapList[fc]->displayMap();
+		gotoXY(63, 5);
+		strDraw("▲", 15);
+		gotoXY(61, 7);
+		strDraw(mapList[fc]->getName(), 249);
+		std::cout << "\t\t\t";
+		gotoXY(63, 9);
+		strDraw("▼", 15);
+
+	loop:
+		chk = _getch();
+		if (chk == UP)
+		{
+			fc++;
+			gotoXY(63, 5);
+			strDraw("▲", 252);
+			Sleep(50);
+			if (fc >= NumOfMap)
+				fc = 0;
+		}
+		else if (chk == DOWN)
+		{
+			fc--;
+			gotoXY(63, 9);
+			strDraw("▼", 252);
+			Sleep(50);
+			if (fc < 0)
+				fc = NumOfMap - 1;
+		}
+		else if (chk == ENTER)
+		{
+			map = mapList[fc];
+			return true;
+		}
+		else if (chk == ESC)
+		{
+			return false;
+		}
+		else goto loop;
+	}
+}
 void Menu::strDraw(std::string str, int colorIndex, HANDLE hConsole /*= GetStdHandle(STD_OUTPUT_HANDLE)*/)
 {
 	SetConsoleTextAttribute(hConsole, colorIndex);
@@ -224,7 +727,7 @@ void Menu::MakeTitleGraph(bool &TimeSwitch)
 	if (TimeSwitch)Sleep(delay);
 
 	chOut = "◥";
-	ColorIndex =8;
+	ColorIndex = 8;
 	gotoXY(pos_x = 46, ++pos_y);
 	strDraw(chOut, ColorIndex, hConsole);
 	if (TimeSwitch)Sleep(delay);
@@ -244,7 +747,7 @@ void Menu::MakeTitleGraph(bool &TimeSwitch)
 	if (TimeSwitch)Sleep(delay);
 
 	chOut = "■";
-	ColorIndex =8;
+	ColorIndex = 8;
 	for (pos_x = 48, pos_y = 5; pos_y > 1; pos_y--)
 	{
 		gotoXY(pos_x, pos_y);

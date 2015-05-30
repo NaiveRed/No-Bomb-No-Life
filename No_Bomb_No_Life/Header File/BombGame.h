@@ -5,8 +5,10 @@ Authors: Hung, Chung Chun(NaiveRed)
 Email: jason841201@gmail.com
 */
 #pragma once
-#include"Menu.h"
 #include<memory>
+#include"Menu.h"
+#include"Character.h"
+#include"Map.h"
 
 class BombGame
 {
@@ -15,12 +17,12 @@ public:
 	~BombGame();
 
 	void setMenu(std::unique_ptr<Menu>&);
-	int DisplayMenu();
-	int OptionDetail(int opt);
-	
-	
+	void MenuProcess();//選單流程，選取角色、地圖
+
 private:
 	std::unique_ptr<Menu> menu;
-
+	std::shared_ptr<Character> player1;
+	std::shared_ptr<Character> player2;
+	std::shared_ptr<Map> map;
 };
 
