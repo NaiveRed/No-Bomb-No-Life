@@ -14,7 +14,10 @@ Character::Character(Character &copy)
 void Character::UseItem()
 {
 	if (item)
+	{
 		item->BeUsed(*this);
+		item = nullptr;//shared_ptr(nullptr_t)
+	}
 }
 void Character::setPower(int change)
 {
@@ -52,7 +55,9 @@ unsigned int Character::getSpeed()
 void Character::setItem(std::shared_ptr<Item>& _item)
 {
 	item = _item;
-	//如果是passive的就直接使用掉 (未寫)
+	if (item->getType() == PASSIVE)
+		this->UseItem();
+	else;//do something...
 }
 Character& Character::operator =(Character& rside)
 {

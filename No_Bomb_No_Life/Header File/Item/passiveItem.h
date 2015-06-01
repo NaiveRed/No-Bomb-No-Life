@@ -11,7 +11,7 @@ Email: jason841201@gmail.com
 class passiveItem :public Item
 {
 public:
-	passiveItem(std::string _name, int _powerSetting, int _amountSetting, int _speedSetting) :Item(_name, _powerSetting, _amountSetting, _speedSetting){};
+	passiveItem(std::string _name, std::string _appearance, int _powerSetting, int _amountSetting, int _speedSetting) :Item(_name, _appearance, _powerSetting, _amountSetting, _speedSetting){};
 	~passiveItem(){}
 
 	void BeUsed(Character&);

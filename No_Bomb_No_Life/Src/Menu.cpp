@@ -57,7 +57,7 @@ int Menu::DisplayList()
 
 loop:
 	FillConsole();
-	TimeSwitch = false;
+	//TimeSwitch = false;
 	MakeTitleGraph(TimeSwitch);
 	if (TimeSwitch)TimeSwitch = false;
 

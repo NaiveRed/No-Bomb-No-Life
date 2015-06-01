@@ -1,7 +1,7 @@
 #include "Pin.h"
 #include"Character.h"
 
-Pin::Pin() :Item("Pin", 0, 0, 0)
+Pin::Pin() :Item("Pin","¡©", 0, 0, 0)
 {
 	
 }

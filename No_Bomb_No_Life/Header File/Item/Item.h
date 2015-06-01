@@ -15,7 +15,7 @@ class Item
 public:
 	Item(){}
 	Item(std::string _name) :name(_name){}
-	Item(std::string _name, int _power, int _amount, int _speed) :name(_name), power(_power), amount(_amount), speed(_speed){};
+	Item(std::string _name, std::string _appearance, int _power, int _amount, int _speed) :name(_name), appearance(_appearance), power(_power), amount(_amount), speed(_speed){};
 	virtual ~Item()=0;
 
 	virtual void BeUsed(Character&) = 0;
@@ -30,7 +30,7 @@ public:
 
 private:
 	const std::string name;
-
+	const std::string appearance;
 	//以下數值為變動的量，非直接指定值
 	int power;
 	int amount;
