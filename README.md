@@ -1,5 +1,9 @@
-# 爆爆王
+# No Bomb No Life
 
+The final project of c++ programming course about a little game.  
+(程式設計課程的期末專案)
+
+[Demo](https://www.youtube.com/watch?v=vUGBBk4Fxks)
 
 ## 專案規格書
 
@@ -33,7 +37,6 @@
 - 若真的不能使用cls來清理畫面，請直接將整個畫面的資訊重新印出，完全蓋過原先畫面
 - 若仍無法流暢的表示遊戲，請直接以類似回合至的方式來進行
 - 若時間充裕可以加入電腦AI功能
-
 
 ## 遊戲說明
 - 遊戲內 help
